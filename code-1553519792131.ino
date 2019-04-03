@@ -4,20 +4,9 @@
    платформе для интернета вещей GreenPL.
    Программный код рекомендуется использовать
    исключительно для подключения платы к GreenPL.
-   !! ВНИМАНИЕ! Библиотеки, необходимые для работы:
-   PubSubClient (http://pubsubclient.knolleary.net/)
-   SimpleTimer (http://cdn.greenpl.ru/SimpleTimer.zip)
-      Adafruit_Sensor (http://cdn.greenpl.ru/codio/libs/Adafruit_Unified_Sensor.zip)
-   Для установки библиотек выполните следующие шаги:
-   Скетч -> Подключить библиотеку -> Добавить .ZIP библиотеку
-   Выберите zip-архив с загруженной библиотекой.
-   Библиотека установится автоматически. В нижней части окна
-   вы получите уведомление об успешности операции.
-   Перед загрузкой кода убедитесь, что библиотеки
-   корретно установлены в среду разработки Arduino IDE.
 */
-#define WIFI_SSID "IOTIK"
-#define WIFI_PASSWORD "Terminator812"
+#define WIFI_SSID "IOTIK"  // ваш логин WI-Fi
+#define WIFI_PASSWORD "Terminator812" //ваш пароль WI-Fi
 #include <PubSubClient.h>
 #include <SimpleTimer.h>
 #include <Wire.h>
@@ -26,18 +15,18 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <VEML6075.h>
-#define TOKEN  "0d790bb6e9be44a9ef0090b8"
+#define TOKEN  "0d790bb6e9be44a9ef0090b8"  // MQT API Token
 #define CLIENT_ID "iotik-0d790bb6e9be44a9ef0090b8"
 #include <Adafruit_ADS1015.h>
-#include <BH1750FVI.h>        // добавляем библиотеку датчика освещенности // adding Light intensity sensor library  
-BH1750FVI LightSensor_1;      // BH1750
+#include <BH1750FVI.h>      
+BH1750FVI LightSensor_1;      
 
 #include <Servo.h>                     // конфигурация сервомотора // servo configuration
 Servo myservo;
 int r,g,b;
 int pos = 1;            // начальная позиция сервомотора // servo start position
 int prevangle = 1;      // предыдущий угол сервомотора // previous angle of servo
-Adafruit_ADS1015 ads(0x48);
+Adafruit_ADS1015 ads(0x48); // коэффициенты калибровки датчика температуры и влажности почвы
 const float air_value    = 83900.0;
 const float water_value  = 45000.0;
 const float moisture_0   = 0.0;
@@ -57,10 +46,10 @@ String TOPIC =  "/devices/iotik-" + String((uint32_t)(ESP.getEfuseMac()));
 char TOPIC_CHAR[100];
 WiFiClient client;
 
-#define Relay_mgbot_mgbot_relay_1_16 16
+#define Relay_mgbot_mgbot_relay_1_16 16    // пины вентилятора и насоса
 #define Relay_mgbot_mgbot_relay_2_17 17
 
-
+// датчик УФ
 VEML6075 veml6075;
 
 // Датчик температуры/влажности и атмосферного давления
@@ -81,6 +70,7 @@ void setup() {
   Serial.begin(115200);
   //Ждем 1 секунду (1000 мс)
   delay(1000);
+   // настройка вентилятора и насоса
     pinMode(Relay_mgbot_mgbot_relay_1_16, OUTPUT);
   pinMode(Relay_mgbot_mgbot_relay_2_17, OUTPUT);
  digitalWrite(Relay_mgbot_mgbot_relay_1_16, 0);
@@ -119,7 +109,7 @@ void setup() {
   if (!mgbot_bme280_21_status)
     Serial.println("Could not find a valid mgbot_bme280_21 sensor, check wiring!");
   sendToGreenPLTimer.setInterval(IOT_UPDATE_TIME, f_mgbot_bme280_21);
-
+// запуск датчика УФ
   if (!veml6075.begin())
     Serial.println("VEML6075 not found!");
   LightSensor_1.begin();              // запуск датчика освещенности // turn the light intensity sensor on
@@ -158,7 +148,7 @@ void loop() {
   GreenPLClient.loop();
   sendToGreenPLTimer.run();
 }
-void f_mgbot_bme280_21() {
+void f_mgbot_bme280_21() { // считывание данных и передача на сервер
   float l = LightSensor_1.getAmbientLight();
   GreenPLPublish("light", l);
   delay(10);
